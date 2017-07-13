@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 // consts
@@ -205,31 +206,38 @@ func NewMessage(body map[string]interface{}, mtype int16) *Message {
 }
 
 func (msg *Message) SetField(key string, v interface{}) *Message {
-	lock.Lock()
-	defer lock.Unlock()
-	msg.body[k] = v
+	msg.lock.Lock()
+	defer msg.lock.Unlock()
+	msg.body[key] = v
 	return msg
 }
 
-// FIeld 获取指定的字段值
-func (msg *Message) GetField(name string) (interface{}, bool) {
-	lock.RLock()
-	defer lock.RUnlock()
-	return msg.body[name]
+// Get certain field
+func (msg *Message) GetField(key string) (interface{}, bool) {
+	msg.lock.RLock()
+	defer msg.lock.RUnlock()
+	v, ok := msg.body[key]
+	return v, ok
 }
 
-// COntentString 返回正文内容字符串
+// return field value as string
+func (msg *Message) GetStringField(key string) string {
+	value, ok := msg.GetField(key)
+	if !ok {
+		return ""
+	}
+	return value.(string)
+}
+
+// return body as string
 func (msg *Message) BodyString() string {
 	values := make([]string, 0, len(msg.body))
 
 	for k, v := range msg.body {
-		kk := strings.Replace(k, "@", "@A", -1)
-		kk = strings.Replace(kk, "/", "@S", -1)
-		vv := strings.Replace(v, "@", "@A", -1)
-		vv = strings.Replace(vv, "/", "@S", -1)
-		values = append(values, fmt.Sprintf("%s@=%v", kk, vv))
+		// @ | / in k, v  should replaced by @A | @S by package user
+		values = append(values, fmt.Sprintf("%s@=%v", k, v))
 	}
-	return strings.Join(values, "/") + MESSAGE_ENDING
+	return strings.Join(values, "/") + "/"
 }
 
 func (msg *Message) Encode() []byte {
@@ -239,16 +247,16 @@ func (msg *Message) Encode() []byte {
 	buffer := bytes.NewBuffer([]byte{})
 	binary.Write(buffer, binary.LittleEndian, int32(length))
 	binary.Write(buffer, binary.LittleEndian, int32(length))
-	binary.Write(buffer, binary.LittleEndian, int16(msg.HeaderType))
-	binary.Write(buffer, binary.LittleEndian, int8(msg.HeaderSecret))
-	binary.Write(buffer, binary.LittleEndian, int8(msg.HeaderReserved))
+	binary.Write(buffer, binary.LittleEndian, int16(msg.headerType))
+	binary.Write(buffer, binary.LittleEndian, int8(msg.headerSecret))
+	binary.Write(buffer, binary.LittleEndian, int8(msg.headerReserved))
 	binary.Write(buffer, binary.LittleEndian, []byte(content))
 	binary.Write(buffer, binary.LittleEndian, MESSAGE_ENDING)
 	return buffer.Bytes()
 }
 
 func (msg *Message) Decode(body []byte, mtype int) *Message {
-	msg.headerType = mtype
+	msg.headerType = int16(mtype)
 	values := strings.Split(strings.Trim(string(body), "/"), "/")
 
 	for _, v := range values {

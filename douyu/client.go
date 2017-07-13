@@ -1,13 +1,13 @@
 package douyu
 
 import (
-	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"github.com/songtianyi/rrframework/logs"
+	"io"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -22,13 +22,15 @@ type Client struct {
 
 // Connect to douyu barrage server
 func Connect(connStr string, handlerRegister *HandlerRegister) (*Client, error) {
-	conn, err = net.Dial("tcp", connStr)
+	conn, err := net.Dial("tcp", connStr)
 	if err != nil {
 		return nil, err
 	}
 
+	logs.Info(fmt.Sprintf("%s connected.", connStr))
+
 	// server connected
-	client = &Client{
+	client := &Client{
 		conn: conn,
 	}
 
@@ -38,7 +40,7 @@ func Connect(connStr string, handlerRegister *HandlerRegister) (*Client, error) 
 		client.HandlerRegister = handlerRegister
 	}
 
-	go c.heartbeat()
+	go client.heartbeat()
 	return client, nil
 }
 
@@ -67,44 +69,49 @@ func (c *Client) Receive() ([]byte, int, error) {
 		buf = make([]byte, pl)
 	}
 	if _, err := io.ReadFull(c.conn, buf[:pl]); err != nil {
-		return buf, code, err
+		return buf, int(code), err
 	}
-	return buf, code, nil
+	return buf, int(code), nil
 }
 
 // Close connnection
 func (c *Client) Close() error {
 	c.closed <- struct{}{}
-	return c.Conn.Close()
+	return c.conn.Close()
 }
 
 // JoinRoom for authentication
 func (c *Client) JoinRoom(room int) error {
 	loginMessage := NewMessage(nil, MESSAGE_TO_SERVER).
 		SetField("type", "loginreq").
-		SetField("roomid", rid)
+		SetField("roomid", room)
 
-	c.Send(loginMessage.Bytes())
+	logs.Info(fmt.Sprintf("joining room %d...", room))
+	c.Send(loginMessage.Encode())
 
-	_, err := c.Receive()
+	_, _, err := c.Receive()
 	if err != nil {
 		return err
 	}
+	logs.Info(fmt.Sprintf("room %d joined", room))
 
 	joinMessage := NewMessage(nil, MESSAGE_TO_SERVER).
 		SetField("type", "joingroup").
-		SetField("rid", rid).
+		SetField("rid", room).
 		SetField("gid", "-9999")
 
-	b, err = c.Send(joinMessage.Bytes())
+	logs.Info(fmt.Sprintf("joining group %d...", -9999))
+	_, err = c.Send(joinMessage.Encode())
 	if err != nil {
 		return err
 	}
+	logs.Info(fmt.Sprintf("group %d joined", -9999))
+
 	go c.serve()
 	return nil
 }
 
-func (c *Client) serve() error {
+func (c *Client) serve() {
 loop:
 	for {
 		select {
@@ -119,7 +126,11 @@ loop:
 
 			// analize message
 			msg := NewMessage(nil, MESSAGE_FROM_SERVER).Decode(b, code)
-			handlers := c.HandlerRegister.Get(msg.GetStringField("type"))
+			err, handlers := c.HandlerRegister.Get(msg.GetStringField("type"))
+			if err != nil {
+				logs.Error(err)
+				continue
+			}
 			for _, v := range handlers {
 				go v.Run(msg)
 			}
@@ -132,12 +143,11 @@ func (c *Client) heartbeat() {
 	for {
 		select {
 		case <-tick:
-
-			heartbeatMsg := NewMessage(nil, MESSGE_TO_SERVER).
+			heartbeatMsg := NewMessage(nil, MESSAGE_TO_SERVER).
 				SetField("type", "keeplive").
-				SetField("tick", timestamp)
+				SetField("tick", time.Now().Unix())
 
-			_, err := c.Send(heartbeatMsg.Bytes())
+			_, err := c.Send(heartbeatMsg.Encode())
 			if err != nil {
 				log.Fatal("heartbeat failed " + err.Error())
 			}

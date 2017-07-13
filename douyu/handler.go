@@ -6,7 +6,7 @@ import (
 )
 
 // Handler: message function wrapper
-type Handler func(interface{})
+type Handler func(*Message)
 
 // HandlerWrapper: message handler wrapper
 type HandlerWrapper struct {
@@ -16,9 +16,9 @@ type HandlerWrapper struct {
 }
 
 // Run: message handler callback
-func (s *HandlerWrapper) Run(session *Session, msg *ReceivedMessage) {
+func (s *HandlerWrapper) Run(msg *Message) {
 	if s.enabled {
-		s.handle(session, msg)
+		s.handle(msg)
 	}
 }
 
@@ -39,18 +39,18 @@ func (s *HandlerWrapper) disableHandle() {
 // HandlerRegister: message handler manager
 type HandlerRegister struct {
 	mu   sync.RWMutex
-	hmap map[int][]*HandlerWrapper
+	hmap map[string][]*HandlerWrapper
 }
 
 // CreateHandlerRegister: create handler register
 func CreateHandlerRegister() *HandlerRegister {
 	return &HandlerRegister{
-		hmap: make(map[int][]*HandlerWrapper),
+		hmap: make(map[string][]*HandlerWrapper),
 	}
 }
 
 // Add: add message callback handle to handler register
-func (hr *HandlerRegister) Add(key int, h Handler, name string) error {
+func (hr *HandlerRegister) Add(key string, h Handler, name string) error {
 	hr.mu.Lock()
 	defer hr.mu.Unlock()
 	for _, v := range hr.hmap {
@@ -65,7 +65,7 @@ func (hr *HandlerRegister) Add(key int, h Handler, name string) error {
 }
 
 // Get: get message handler
-func (hr *HandlerRegister) Get(key int) (error, []*HandlerWrapper) {
+func (hr *HandlerRegister) Get(key string) (error, []*HandlerWrapper) {
 	hr.mu.RLock()
 	defer hr.mu.RUnlock()
 	if v, ok := hr.hmap[key]; ok {
@@ -75,7 +75,7 @@ func (hr *HandlerRegister) Get(key int) (error, []*HandlerWrapper) {
 }
 
 // EnableByType: enable handler by message type
-func (hr *HandlerRegister) EnableByType(key int) error {
+func (hr *HandlerRegister) EnableByType(key string) error {
 	err, handles := hr.Get(key)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (hr *HandlerRegister) EnableByType(key int) error {
 }
 
 // DisableByType: disable handler by message type
-func (hr *HandlerRegister) DisableByType(key int) error {
+func (hr *HandlerRegister) DisableByType(key string) error {
 	err, handles := hr.Get(key)
 	if err != nil {
 		return err
