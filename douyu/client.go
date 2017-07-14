@@ -58,7 +58,8 @@ func (c *Client) Receive() ([]byte, int, error) {
 		return buf, 0, err
 	}
 
-	// 4byte for message length
+	// 12 bytes header
+	// 4byte for packet length
 	pl := binary.LittleEndian.Uint32(buf[:4])
 
 	// ignore buf[4:8]
@@ -69,12 +70,12 @@ func (c *Client) Receive() ([]byte, int, error) {
 	// 1byte for secret
 	// 1byte for reserved
 
-	// content length(include ENDING)
+	// body content length(include ENDING)
 	cl := pl - 8
 
 	if cl > 512 {
 		// expand buffer
-		buf = make([]byte, pl)
+		buf = make([]byte, cl)
 	}
 	if _, err := io.ReadFull(c.conn, buf[:cl]); err != nil {
 		return buf, int(code), err
@@ -89,7 +90,7 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// JoinRoom for authentication
+// JoinRoom
 func (c *Client) JoinRoom(room int) error {
 	loginMessage := NewMessage(nil, MESSAGE_TO_SERVER).
 		SetField("type", MSG_TYPE_LOGINREQ).
@@ -162,7 +163,7 @@ func (c *Client) heartbeat() {
 
 			_, err := c.Send(heartbeatMsg.Encode())
 			if err != nil {
-				log.Fatal("heartbeat failed " + err.Error())
+				log.Fatal("heartbeat failed, " + err.Error())
 			}
 		}
 	}
