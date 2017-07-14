@@ -1,11 +1,12 @@
 package main
 
 import (
-	//"strings"
 	"fmt"
 	"github.com/songtianyi/barrage/douyu"
 	"github.com/songtianyi/rrframework/logs"
-	//"github.com/yanyiwu/gojieba"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 func chatmsg(msg *douyu.Message) {
@@ -13,11 +14,26 @@ func chatmsg(msg *douyu.Message) {
 	nn := msg.GetStringField("nn")
 	txt := msg.GetStringField("txt")
 
-	//jieba := gojieba.NewJieba()
-	//defer jieba.Free()
-	//words := jieba.Cut(txt, true)
-	//logs.Info(fmt.Sprintf("level(%s) - %s >>> %s | %s", level, nn, txt, strings.Join(words, "/")))
-	logs.Info(fmt.Sprintf("level(%s) - %s >>> %s", level, nn, txt))
+	km := url.Values{}
+	km.Add("api_key", "E1v3e0N2o4yz6WdSneCAhY7JqZnYea4TDeUKjvgy")
+	km.Add("text", txt)
+	km.Add("pattern", "all")
+	km.Add("format", "conll")
+
+	uri := "http://api.ltp-cloud.com/analysis/?" + km.Encode()
+	resp, err := http.Get(uri)
+	if err != nil {
+		logs.Info(fmt.Sprintf("level(%s) - %s >>> %s | %s", level, nn, txt, err))
+		return
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logs.Info(fmt.Sprintf("level(%s) - %s >>> %s | %s", level, nn, txt, err))
+		return
+	}
+	logs.Info(fmt.Sprintf("level(%s) - %s >>> %s\n%s", level, nn, txt, string(contents)))
+
 }
 
 func main() {
