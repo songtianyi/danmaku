@@ -60,7 +60,7 @@ func (hr *HandlerRegister) Add(key string, h Handler, name string) error {
 			}
 		}
 	}
-	hr.hmap[key] = append(hr.hmap[key], &HandlerWrapper{handle: h, enabled: false, name: name})
+	hr.hmap[key] = append(hr.hmap[key], &HandlerWrapper{handle: h, enabled: true, name: name})
 	return nil
 }
 
@@ -71,7 +71,7 @@ func (hr *HandlerRegister) Get(key string) (error, []*HandlerWrapper) {
 	if v, ok := hr.hmap[key]; ok {
 		return nil, v
 	}
-	return fmt.Errorf("handlers for key [%d] not registered", key), nil
+	return fmt.Errorf("handlers for key [%s] not registered", key), nil
 }
 
 // EnableByType: enable handler by message type

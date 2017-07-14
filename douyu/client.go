@@ -58,20 +58,29 @@ func (c *Client) Receive() ([]byte, int, error) {
 		return buf, 0, err
 	}
 
-	// ignore 8 byte, first 4byte for message length
+	// 4byte for message length
 	pl := binary.LittleEndian.Uint32(buf[:4])
 
-	// 2byte for message type
-	code := binary.LittleEndian.Uint32(buf[8:10])
+	// ignore buf[4:8]
 
-	if pl > 512 {
+	// 2byte for message type
+	code := binary.LittleEndian.Uint16(buf[8:10])
+
+	// 1byte for secret
+	// 1byte for reserved
+
+	// content length(include ENDING)
+	cl := pl - 8
+
+	if cl > 512 {
 		// expand buffer
 		buf = make([]byte, pl)
 	}
-	if _, err := io.ReadFull(c.conn, buf[:pl]); err != nil {
+	if _, err := io.ReadFull(c.conn, buf[:cl]); err != nil {
 		return buf, int(code), err
 	}
-	return buf, int(code), nil
+	// exclude ENDING
+	return buf[:cl-1], int(code), nil
 }
 
 // Close connnection
@@ -83,17 +92,23 @@ func (c *Client) Close() error {
 // JoinRoom for authentication
 func (c *Client) JoinRoom(room int) error {
 	loginMessage := NewMessage(nil, MESSAGE_TO_SERVER).
-		SetField("type", "loginreq").
+		SetField("type", MSG_TYPE_LOGINREQ).
 		SetField("roomid", room)
 
 	logs.Info(fmt.Sprintf("joining room %d...", room))
-	c.Send(loginMessage.Encode())
+	if _, err := c.Send(loginMessage.Encode()); err != nil {
+		return err
+	}
 
-	_, _, err := c.Receive()
+	b, code, err := c.Receive()
 	if err != nil {
 		return err
 	}
+
+	// TODO assert(code == MESSAGE_FROM_SERVER)
 	logs.Info(fmt.Sprintf("room %d joined", room))
+	loginRes := NewMessage(nil, MESSAGE_FROM_SERVER).Decode(b, code)
+	logs.Info(fmt.Sprintf("room %d live status %s", room, loginRes.GetStringField("live_stat")))
 
 	joinMessage := NewMessage(nil, MESSAGE_TO_SERVER).
 		SetField("type", "joingroup").
@@ -106,12 +121,10 @@ func (c *Client) JoinRoom(room int) error {
 		return err
 	}
 	logs.Info(fmt.Sprintf("group %d joined", -9999))
-
-	go c.serve()
 	return nil
 }
 
-func (c *Client) serve() {
+func (c *Client) Serve() {
 loop:
 	for {
 		select {

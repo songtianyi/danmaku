@@ -12,11 +12,16 @@ import (
 const (
 	MESSAGE_TO_SERVER   = int16(689)
 	MESSAGE_FROM_SERVER = int16(690)
-	MESSAGE_ENDING      = "\n"
+	MESSAGE_ENDING      = int8(0)
 )
 
 // 弹幕服务器端相应消息类型
 const (
+	MSG_TYPE_LOGINREQ = "loginreq"
+	// 客户端登录请求
+	// 字段说明
+	//     type				表示为"登录"消息,固定为 loginreq
+	//	   roomid			房间id
 	MSG_TYPE_LOGINRES = "loginres" // 登录响应消息
 	// 服务端返回登陆响应消息,完整的数据部分应包含的字段如下:
 	// 字段说明
@@ -205,10 +210,10 @@ func NewMessage(body map[string]interface{}, mtype int16) *Message {
 	}
 }
 
-func (msg *Message) SetField(key string, v interface{}) *Message {
+func (msg *Message) SetField(key string, value interface{}) *Message {
 	msg.lock.Lock()
 	defer msg.lock.Unlock()
-	msg.body[key] = v
+	msg.body[key] = value
 	return msg
 }
 
@@ -229,20 +234,29 @@ func (msg *Message) GetStringField(key string) string {
 	return value.(string)
 }
 
+// return field value as int
+func (msg *Message) GetIntField(key string) int {
+	value, ok := msg.GetField(key)
+	if !ok {
+		return 0
+	}
+	return value.(int)
+}
+
 // return body as string
 func (msg *Message) BodyString() string {
 	values := make([]string, 0, len(msg.body))
 
 	for k, v := range msg.body {
 		// @ | / in k, v  should replaced by @A | @S by package user
-		values = append(values, fmt.Sprintf("%s@=%v", k, v))
+		values = append(values, fmt.Sprintf("%s@=%v/", k, v))
 	}
-	return strings.Join(values, "/") + "/"
+	return strings.Join(values, "")
 }
 
 func (msg *Message) Encode() []byte {
 	content := msg.BodyString()
-	length := 12 + len(content) // 2x长度4字节 + 类型2字节 + 加密字段1字节 + 保留字段1字节 + 结尾字段1字节
+	length := 9 + len(content) // 长度4字节 + 类型2字节 + 加密字段1字节 + 保留字段1字节 + 结尾字段1字节
 
 	buffer := bytes.NewBuffer([]byte{})
 	binary.Write(buffer, binary.LittleEndian, int32(length))
