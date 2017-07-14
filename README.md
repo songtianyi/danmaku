@@ -6,7 +6,7 @@
 
 ## 例子
 * douyu
-```
+```go
 package main
 
 import (
