@@ -1,5 +1,5 @@
 ## barrage
-各平台弹幕协议和开发平台API
+各平台弹幕协议和开放平台API
 
 ## 支持列表
 * douyu.com
@@ -31,7 +31,6 @@ func main() {
 
 	client.HandlerRegister.Add("chatmsg", douyu.Handler(chatmsg), "chatmsg")
 	if err := client.JoinRoom(288016); err != nil {
-		//if err := client.JoinRoom(532152); err != nil {
 		logs.Error(fmt.Sprintf("Join room fail, %s", err.Error()))
 		return
 	}

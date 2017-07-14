@@ -142,7 +142,7 @@ loop:
 			msg := NewMessage(nil, MESSAGE_FROM_SERVER).Decode(b, code)
 			err, handlers := c.HandlerRegister.Get(msg.GetStringField("type"))
 			if err != nil {
-				logs.Error(err)
+				logs.Warn(err)
 				continue
 			}
 			for _, v := range handlers {
