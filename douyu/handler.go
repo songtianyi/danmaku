@@ -71,7 +71,7 @@ func (hr *HandlerRegister) Get(key string) (error, []*HandlerWrapper) {
 	if v, ok := hr.hmap[key]; ok {
 		return nil, v
 	}
-	return fmt.Errorf("handlers for key [%s] not registered", key), nil
+	return fmt.Errorf("no handlers for key [%s]", key), nil
 }
 
 // EnableByType: enable handler by message type
