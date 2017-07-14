@@ -37,3 +37,6 @@ func main() {
 	client.Serve()
 }
 ```
+
+## demo
+![douyu-barrage-demo](http://ww1.sinaimg.cn/large/006HJ39wgy1fhjnykako6j30ik0g5adm.jpg)
