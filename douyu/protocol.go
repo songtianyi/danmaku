@@ -275,11 +275,9 @@ func (msg *Message) Decode(body []byte, mtype int) *Message {
 
 	for _, v := range values {
 		kv := strings.SplitN(v, "@=", 2)
+		kk := Unescape(kv[0])
+		vv := Unescape(kv[1])
 
-		kk := strings.Replace(kv[0], "@A", "@", -1)
-		kk = strings.Replace(kk, "@S", "/", -1)
-		vv := strings.Replace(kv[1], "@A", "@", -1)
-		vv = strings.Replace(vv, "@S", "/", -1)
 		msg.SetField(kk, vv)
 	}
 	return msg

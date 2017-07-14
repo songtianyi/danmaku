@@ -11,5 +11,7 @@ func Escaped(v string) string {
 }
 
 func Unescape(v string) string {
-	return v
+	vvk := strings.Replace(v, "@A", "@", -1)
+	vv = strings.Replace(vv, "@S", "/", -1)
+	return vv
 }
