@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"github.com/songtianyi/barrage/douyu"
 	"github.com/songtianyi/rrframework/logs"
+	"github.com/yanyiwu/gojieba"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-func chatmsg(msg *douyu.Message) {
-	level := msg.GetStringField("level")
-	nn := msg.GetStringField("nn")
-	txt := msg.GetStringField("txt")
+var (
+	jieba = gojieba.NewJieba()
+)
 
+func ltp(txt string) ([]byte, error) {
 	km := url.Values{}
 	km.Add("api_key", "E1v3e0N2o4yz6WdSneCAhY7JqZnYea4TDeUKjvgy")
 	km.Add("text", txt)
@@ -23,20 +25,31 @@ func chatmsg(msg *douyu.Message) {
 	uri := "http://api.ltp-cloud.com/analysis/?" + km.Encode()
 	resp, err := http.Get(uri)
 	if err != nil {
-		logs.Info(fmt.Sprintf("level(%s) - %s >>> %s | %s", level, nn, txt, err))
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		logs.Info(fmt.Sprintf("level(%s) - %s >>> %s | %s", level, nn, txt, err))
-		return
+		return nil, err
 	}
-	logs.Info(fmt.Sprintf("level(%s) - %s >>> %s\n%s", level, nn, txt, string(contents)))
+	return contents, nil
+}
+
+func chatmsg(msg *douyu.Message) {
+	level := msg.GetStringField("level")
+	nn := msg.GetStringField("nn")
+	txt := msg.GetStringField("txt")
+
+	//contents := ltp(txt)
+	contents := jieba.CutAll(txt)
+
+	//logs.Info(fmt.Sprintf("level(%s) - %s >>> %s\n%s", level, nn, txt, string(contents)))
+	logs.Info(fmt.Sprintf("level(%s) - %s >>> %s\n%s", level, nn, txt, strings.Join(contents, "/")))
 
 }
 
 func main() {
+	defer jieba.Free()
 	client, err := douyu.Connect("openbarrage.douyutv.com:8601", nil)
 	if err != nil {
 		logs.Error(err)
