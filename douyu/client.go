@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/songtianyi/rrframework/logs"
 	"io"
-	"log"
 	"net"
 	"sync"
 	"time"
@@ -88,7 +87,8 @@ func (c *Client) Receive() ([]byte, int, error) {
 
 // Close connnection
 func (c *Client) Close() error {
-	c.closed <- struct{}{}
+	c.closed <- struct{}{} // receive
+	c.closed <- struct{}{} // heartbeat
 	return c.conn.Close()
 }
 
@@ -156,8 +156,11 @@ loop:
 
 func (c *Client) heartbeat() {
 	tick := time.Tick(45 * time.Second)
+loop:
 	for {
 		select {
+		case <-c.closed:
+			break loop
 		case <-tick:
 			heartbeatMsg := NewMessage(nil, MESSAGE_TO_SERVER).
 				SetField("type", "keeplive").
@@ -165,7 +168,7 @@ func (c *Client) heartbeat() {
 
 			_, err := c.Send(heartbeatMsg.Encode())
 			if err != nil {
-				log.Fatal("heartbeat failed, " + err.Error())
+				logs.Error("heartbeat failed, " + err.Error())
 			}
 		}
 	}
