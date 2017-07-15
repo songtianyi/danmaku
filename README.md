@@ -36,5 +36,31 @@ func main() {
 }
 ```
 
+* live.bilibili.com
+
+```
+package main
+
+import (
+	"github.com/songtianyi/barrage/bilibili"
+	"github.com/songtianyi/rrframework/logs"
+)
+
+func danmu(msg *bilibili.Message) {
+	logs.Debug(">>> ", string(msg.Bytes()))
+}
+
+func main() {
+	// uri, userid, handlerRegister
+	client, err := bilibili.Connect("https://live.bilibili.com/43783", -1, nil)
+	if err != nil {
+		logs.Error(err)
+		return
+	}
+	client.HandlerRegister.Add(bilibili.DANMU_MSG, bilibili.Handler(danmu), "danmu")
+	client.Serve()
+}
+```
+
 ## demo
 ![douyu-barrage-demo](http://ww1.sinaimg.cn/large/006HJ39wgy1fhjnykako6j30ik0g5adm.jpg)
