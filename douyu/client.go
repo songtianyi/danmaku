@@ -46,6 +46,8 @@ func Connect(connStr string, handlerRegister *HandlerRegister) (*Client, error) 
 
 // Send message to server
 func (c *Client) Send(b []byte) (int, error) {
+	c.wLock.Lock()
+	defer c.wLock.Unlock()
 	return c.conn.Write(b)
 }
 

@@ -57,7 +57,7 @@ func main() {
 	}
 
 	client.HandlerRegister.Add("chatmsg", douyu.Handler(chatmsg), "chatmsg")
-	if err := client.JoinRoom(288016); err != nil {
+	if err := client.JoinRoom(667351); err != nil {
 		//if err := client.JoinRoom(532152); err != nil {
 		logs.Error(fmt.Sprintf("Join room fail, %s", err.Error()))
 		return
