@@ -2,7 +2,7 @@
 各直播平台弹幕协议和开放平台API
 
 ## 支持列表
-* douyu.com
+* **douyu.com**
 
 ```go
 package main
@@ -36,7 +36,7 @@ func main() {
 }
 ```
 
-* live.bilibili.com
+* **live.bilibili.com**
 
 ```
 package main
