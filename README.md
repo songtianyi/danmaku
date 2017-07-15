@@ -4,8 +4,6 @@
 ## 支持列表
 * douyu.com
 
-## 例子
-* douyu
 ```go
 package main
 
