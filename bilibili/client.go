@@ -32,7 +32,7 @@ func Connect(uri string, uid int, handlerRegister *HandlerRegister) (*Client, er
 	if err != nil {
 		return nil, err
 	}
-	server += ":788"
+	server += ":" + SERVER_PORT
 	conn, err := net.DialTimeout("tcp", server, 10*time.Second)
 	if err != nil {
 		return nil, err
@@ -139,18 +139,26 @@ loop:
 				logs.Error(err)
 				continue
 			}
-			if code == 8 {
+			switch code {
+			case 3:
+				logs.Info("heartbeat ok")
+				continue
+			case 8:
 				logs.Info("handshake ok")
 				continue
-			}
-			msg := NewMessage(b, code).Decode()
-			err, handlers := c.HandlerRegister.Get(msg.GetCmd())
-			if err != nil {
-				logs.Warn(err)
-				continue
-			}
-			for _, v := range handlers {
-				go v.Run(msg)
+			case 5:
+				msg := NewMessage(b, code).Decode()
+				err, handlers := c.HandlerRegister.Get(msg.GetCmd())
+				if err != nil {
+					logs.Warn(err)
+					continue
+				}
+				for _, v := range handlers {
+					go v.Run(msg)
+				}
+			default:
+				logs.Warn(fmt.Sprintf("unhandled body type %d", code))
+
 			}
 
 		}

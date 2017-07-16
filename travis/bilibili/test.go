@@ -6,12 +6,12 @@ import (
 )
 
 func danmu(msg *bilibili.Message) {
-	logs.Debug(">>> ", string(msg.Bytes()))
+	logs.Debug(">>>", string(msg.Bytes()))
 }
 
 func main() {
 	// uri, userid, handlerRegister
-	client, err := bilibili.Connect("https://live.bilibili.com/43783", -1, nil)
+	client, err := bilibili.Connect("https://live.bilibili.com/128645", -1, nil)
 	if err != nil {
 		logs.Error(err)
 		return

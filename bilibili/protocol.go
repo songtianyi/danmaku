@@ -17,6 +17,9 @@ const (
 const (
 	// cmd types
 	DANMU_MSG = "DANMU_MSG"
+
+	//
+	SERVER_PORT = "2243"
 )
 
 type Message struct {
@@ -71,7 +74,6 @@ func (msg *Message) Decode() *Message {
 }
 
 func (msg *Message) GetCmd() string {
-	//logs.Debug(msg.bodyType, string(msg.body))
 	jc, err := rrconfig.LoadJsonConfigFromBytes(msg.body)
 	if err != nil {
 		logs.Error(err)
