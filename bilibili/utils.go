@@ -37,8 +37,8 @@ func GetRoomId(uri string) (string, error) {
 }
 
 func GetBarrageServerAndLiveState(room string) (string, string, error) {
-	urii := "http://live.bilibili.com/api/player?id=cid:" + room
-	body, err := doHttp(urii)
+	uri := "http://live.bilibili.com/api/player?id=cid:" + room
+	body, err := doHttp(uri)
 	if err != nil {
 		return "", "", err
 	}

@@ -118,9 +118,9 @@ loop:
 		case <-c.closed:
 			break loop
 		case <-tick:
-			handshake := NewHeartbeatMessage(c.roomid, c.uid)
+			heartbeat := NewHeartbeatMessage(c.roomid, c.uid)
 
-			if _, err := c.conn.Write(handshake.Encode()); err != nil {
+			if _, err := c.conn.Write(heartbeat.Encode()); err != nil {
 				logs.Error("heartbeat failed, " + err.Error())
 			}
 		}
