@@ -66,7 +66,7 @@ func (msg *Message) Encode() []byte {
 func (msg *Message) Decode() *Message {
 	// TODO
 	s := string(msg.body)
-	fmt.Println(s)
+	//fmt.Println(s)
 
 	// split by "ack:0"
 	//raw := strings.Split(s, "ack:0")
