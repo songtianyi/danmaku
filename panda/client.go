@@ -1,7 +1,7 @@
 package panda
 
 import (
-	"encoding/binary"
+	//"encoding/binary"
 	"fmt"
 	"github.com/songtianyi/rrframework/logs"
 	"io"
@@ -72,8 +72,7 @@ func Connect(uri string, handlerRegister *HandlerRegister) (*Client, error) {
 	if _, err := io.ReadFull(client.conn, buf); err != nil {
 		return nil, err
 	}
-	fmt.Printf("%sSEND\n", string(buf[:]))
-	fmt.Printf("%08b\n", buf[:28])
+	logs.Info("handshake ok")
 
 	go client.heartbeat()
 	return client, nil
@@ -89,33 +88,14 @@ func (c *Client) Receive() ([]byte, error) {
 	c.rLock.Lock()
 	defer c.rLock.Unlock()
 	buf := make([]byte, 4096) // big buffer
-	if _, err := io.ReadFull(c.conn, buf[0:25]); err != nil {
-		return nil, err
-	}
-	fmt.Printf("%sSEND\n", string(buf[:25]))
-	fmt.Printf("%08b\n", buf[:5])
-	fmt.Printf("%08b\n", buf[5:25])
-	
-	cl := binary.BigEndian.Uint32(buf[21:25])
 
-	//n, err := c.conn.Read(buf)
-	//if err != nil {
-	//	if err != io.EOF {
-	//		return buf[:n], err
-	//	}
-	//}
-	//for i, v := range buf[:n] {
-	//	if rune(v) == '}' && rune(buf[i+1]) == 'a' {
-	//		logs.Warn(i)
-	//		break
-	//	}
-	//}
-	//return buf[:n], nil
-
-	if _, err := io.ReadFull(c.conn, buf[:cl]);err != nil {
-		return nil, err
+	n, err := c.conn.Read(buf)
+	if err != nil {
+		if err != io.EOF {
+			return buf[:n], err
+		}
 	}
-	return buf[:cl], nil
+	return buf[:n], nil
 }
 
 // Close connnection
@@ -154,17 +134,16 @@ loop:
 				logs.Error(err)
 				continue
 			}
-			logs.Info(string(b))
-			//for _, dm := range NewMessage(b).Decode().Decoded {
-			//err, handlers := c.HandlerRegister.Get(dm.Type)
-			//if err != nil {
-			//	logs.Warn(err)
-			//	continue
-			//}
-			//for _, v := range handlers {
-			//	go v.Run(dm)
-			//}
-			//}
+			for _, dm := range NewMessage(b).Decode().Decoded {
+				err, handlers := c.HandlerRegister.Get(dm.Type)
+				if err != nil {
+					logs.Warn(err)
+					continue
+				}
+				for _, v := range handlers {
+					go v.Run(dm)
+				}
+			}
 
 		}
 	}

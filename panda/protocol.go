@@ -3,13 +3,13 @@ package panda
 import (
 	"bytes"
 	"encoding/binary"
-	"strings"
 	"fmt"
+	//"strings"
 	"regexp"
 )
 
 const (
-	DANMU_MSG = "311"
+	DANMU_MSG = "1"
 )
 
 type DecodedMessage struct {
@@ -66,24 +66,36 @@ func (msg *Message) Encode() []byte {
 func (msg *Message) Decode() *Message {
 	// TODO
 	s := string(msg.body)
-		   js := strings.Split(s, "ack:")
-		   fmt.Println(js)
-	//nickNameReg := regexp.MustCompile("\"nickName\":\"([^\"]*)\"")
-	//nickNames := nickNameReg.FindAllStringSubmatch(s, -1)
-	//typeReg := regexp.MustCompile("\"type\":\"([^\"]*)\"")
-	//types := typeReg.FindAllStringSubmatch(s, -1)
-	//contentReg := regexp.MustCompile("\"content\":\"([^\"]*)\"")
-	//contents := contentReg.FindAllStringSubmatch(s, -1)
-	//fmt.Println(nickNames, types, contents)
+	fmt.Println(s)
 
-	//msg.Decoded = make([]*DecodedMessage, 0)
-	//for i, v := range types {
-	//	msg.Decoded = append(msg.Decoded, &DecodedMessage{
-	//		Type:     v[1],
-	//		Nickname: nickNames[i][1],
-	//		Content:  contents[i][1],
-	//	})
+	// split by "ack:0"
+	//raw := strings.Split(s, "ack:0")
+	//for _, v := range raw {
+	//	if n := strings.Index(v, "{"); n > -1 {
+	//		js := v[n:]
+	//		// unmarshal json
+	//		fmt.Println(js)
+	//	}
 	//}
+
+	nickNameReg := regexp.MustCompile("\"nickName\":\"([^\"]*)\"")
+	nickNames := nickNameReg.FindAllStringSubmatch(s, -1)
+	typeReg := regexp.MustCompile("\"type\":\"([^\"]*)\"")
+	types := typeReg.FindAllStringSubmatch(s, -1)
+	contentReg := regexp.MustCompile("\"content\":\"([^\"]*)\"")
+	contents := contentReg.FindAllStringSubmatch(s, -1)
+
+	msg.Decoded = make([]*DecodedMessage, 0)
+	for i, v := range types {
+		if v[1] != "1" {
+			continue
+		}
+		msg.Decoded = append(msg.Decoded, &DecodedMessage{
+			Type:     v[1],
+			Nickname: nickNames[i][1],
+			Content:  contents[i][1],
+		})
+	}
 	return msg
 }
 

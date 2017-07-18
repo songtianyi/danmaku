@@ -69,8 +69,6 @@ func GetBarrageLiveState(roomStr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	du, _ := jc.Dump()
-	fmt.Println(du)
 	status, _ := jc.GetString("data.videoinfo.status")
 	return status, nil
 }
@@ -81,7 +79,6 @@ func GetBarrageChatInfo(roomStr string) (*ChatInfo, error) {
 	km.Add("_", strconv.Itoa(int(time.Now().Unix())))
 
 	api := "http://www.panda.tv/ajax_chatinfo?" + km.Encode()
-	fmt.Println(api)
 	body, err := doHttp(api)
 	if err != nil {
 		return nil, err
