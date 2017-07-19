@@ -7,15 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
-)
-
-var (
-	videoInfoReg = regexp.MustCompile("'videoinfo': (.*),")
-	stateReg     = regexp.MustCompile("<state>(.*?)</state>")
 )
 
 type ChatData struct {
