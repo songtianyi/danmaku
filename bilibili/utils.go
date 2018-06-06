@@ -29,6 +29,7 @@ func GetRoomId(uri string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(string(body))
 	matchs := roomReg.FindStringSubmatch(string(body))
 	if len(matchs) < 2 {
 		return "", fmt.Errorf("ROOMID submatch %q", matchs)

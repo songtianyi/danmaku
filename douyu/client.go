@@ -3,11 +3,12 @@ package douyu
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/songtianyi/rrframework/logs"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/songtianyi/rrframework/logs"
 )
 
 type Client struct {
@@ -144,7 +145,7 @@ loop:
 			msg := NewMessage(nil, MESSAGE_FROM_SERVER).Decode(b, code)
 			err, handlers := c.HandlerRegister.Get(msg.GetStringField("type"))
 			if err != nil {
-				logs.Warn(err)
+				logs.Debug(err)
 				continue
 			}
 			for _, v := range handlers {

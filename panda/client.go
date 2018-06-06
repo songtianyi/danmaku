@@ -33,6 +33,9 @@ func Connect(uri string, handlerRegister *HandlerRegister) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	if state == "2" {
+		return nil, fmt.Errorf("room state %s", state)
+	}
 
 	chatInfo, err := GetBarrageChatInfo(roomStr)
 	if err != nil {
@@ -131,7 +134,7 @@ loop:
 		default:
 			b, err := c.Receive()
 			if err != nil {
-				logs.Error(err)
+				logs.Error("Receive", err)
 				continue
 			}
 			for _, dm := range NewMessage(b).Decode().Decoded {
