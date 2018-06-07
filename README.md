@@ -1,4 +1,4 @@
-## barrage
+## danmaku
 各直播平台弹幕协议和开放平台API
 
 ## 支持列表
