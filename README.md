@@ -89,6 +89,3 @@ func main() {
 
 ## demo
 ![douyu-barrage-demo](http://ww1.sinaimg.cn/large/006HJ39wgy1fhjnykako6j30ik0g5adm.jpg)
-
-## 微信交流群
-<img src="http://owm6k6w0y.bkt.clouddn.com/17-9-21/70665214.jpg" width="480" height="480"/>
